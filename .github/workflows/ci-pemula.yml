@@ -1,0 +1,25 @@
+name: Jalur Otomatisasi Pengujian Script RAM
+
+# 1. Kapan robot harus berjalan? (Ketika ada kode baru yang di-PUSH ke cabang main)
+on:
+  push:
+    branches: [ main ]
+
+# 2. Apa saja tugas yang harus dilakukan oleh robot?
+jobs:
+  tes_aplikasi:
+    # Robot akan menyewa server cloud berbasis Linux Ubuntu terbaru milik GitHub
+    runs-on: ubuntu-latest
+
+    steps:
+    # Langkah A: Robot mengambil semua file proyek Anda dari repository GitHub
+    - name: Ambil Kode Proyek
+      uses: actions/checkout@v4
+
+    # Langkah B: Robot memberikan izin keamanan pada script agar bisa dijalankan
+    - name: Beri Izin Eksekusi Script
+      run: chmod +x cek_server.sh
+
+    # Langkah C: Robot melakukan uji coba menjalankan script secara otomatis di cloud
+    - name: Jalankan Uji Coba Script RAM
+      run: ./cek_server.sh
