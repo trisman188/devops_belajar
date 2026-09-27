@@ -1,25 +1,44 @@
-name: Jalur Otomatisasi Pengujian Script RAM
+name: Jalur Otomatisasi CI dan CD DevOps
 
-# 1. Kapan robot harus berjalan? (Ketika ada kode baru yang di-PUSH ke cabang main)
 on:
   push:
     branches: [ main ]
 
-# 2. Apa saja tugas yang harus dilakukan oleh robot?
 jobs:
+  # TAHAP CI: Menguji kode program di cloud
   tes_aplikasi:
-    # Robot akan menyewa server cloud berbasis Linux Ubuntu terbaru milik GitHub
     runs-on: ubuntu-latest
-
     steps:
-    # Langkah A: Robot mengambil semua file proyek Anda dari repository GitHub
     - name: Ambil Kode Proyek
       uses: actions/checkout@v4
 
-    # Langkah B: Robot memberikan izin keamanan pada script agar bisa dijalankan
     - name: Beri Izin Eksekusi Script
       run: chmod +x cek_server.sh
 
-    # Langkah C: Robot melakukan uji coba menjalankan script secara otomatis di cloud
     - name: Jalankan Uji Coba Script RAM
       run: ./cek_server.sh
+
+  # TAHAP CD: Membuat Docker Image & Mengirim ke Docker Hub Otomatis
+  bangun_dan_kirim_docker:
+    runs-on: ubuntu-latest
+    # Tugas CD ini HANYA akan berjalan jika tugas pengujian (CI) di atas lolos/sukses!
+    needs: tes_aplikasi
+    
+    steps:
+    - name: Ambil Kode Proyek
+      uses: actions/checkout@v4
+
+    # Robot melakukan login otomatis ke Docker Hub menggunakan kunci rahasia dari GitHub Secrets
+    - name: Login ke Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets::DOCKER_USERNAME }}
+        password: ${{ secrets::DOCKER_PASSWORD }}
+
+    # Robot membangun Docker Image dan langsung mengunggahnya ke akun Anda
+    - name: Bangun & Push Docker Image ke Cloud
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        push: true
+        tags: trisman188/ram-monitor:latest
